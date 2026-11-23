@@ -1,4 +1,4 @@
-﻿name: CI - Agentic Benchmark
+name: CI - Agentic Benchmark
 
 on:
   push:
@@ -31,3 +31,50 @@ jobs:
 
       - name: Executer les tests
         run: python manage.py test dashboard
+
+  notify-n8n:
+    needs: tests
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Envoyer le resultat a n8n
+        env:
+          N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
+          STATUS: ${{ needs.tests.result }}
+          REPOSITORY: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+          COMMIT: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EVENT: ${{ github.event_name }}
+
+        run: |
+          if [ -z "$N8N_WEBHOOK_URL" ]; then
+            echo "N8N_WEBHOOK_URL absent. Notification ignoree."
+            exit 0
+          fi
+
+          PAYLOAD=$(jq -n \
+            --arg status "$STATUS" \
+            --arg repository "$REPOSITORY" \
+            --arg branch "$BRANCH" \
+            --arg commit "$COMMIT" \
+            --arg run_id "$RUN_ID" \
+            --arg run_url "$RUN_URL" \
+            --arg event "$EVENT" \
+            '{
+              status: $status,
+              repository: $repository,
+              branch: $branch,
+              commit: $commit,
+              run_id: $run_id,
+              run_url: $run_url,
+              event: $event
+            }')
+
+          curl --fail --silent --show-error --max-time 20 \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            "$N8N_WEBHOOK_URL"
