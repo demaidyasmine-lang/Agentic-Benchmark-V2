@@ -1,4 +1,5 @@
-﻿document.addEventListener("DOMContentLoaded", function () {
+﻿
+document.addEventListener("DOMContentLoaded", function () {
     const dataElement = document.getElementById("benchmark-chart-data");
 
     if (!dataElement || typeof Plotly === "undefined") {
@@ -6,7 +7,14 @@
         return;
     }
 
-    const data = JSON.parse(dataElement.textContent);
+    let data;
+
+    try {
+        data = JSON.parse(dataElement.textContent);
+    } catch (error) {
+        console.error("Erreur lors de la lecture des données du dashboard :", error);
+        return;
+    }
 
     const labels = data.labels || [];
     const accuracies = data.accuracies || [];
@@ -32,6 +40,8 @@
         responsive: true,
         displayModeBar: false
     };
+
+    // 1. TAUX DE RÉUSSITE PAR AGENT
 
     const accuracyElement = document.getElementById("accuracyChart");
 
@@ -64,6 +74,8 @@
             config
         );
     }
+
+    // 2. RÉPARTITION DES TÂCHES RÉUSSIES ET ÉCHOUÉES
 
     const taskElement = document.getElementById("taskChart");
 
@@ -106,6 +118,8 @@
         );
     }
 
+    // 3. RÉPARTITION DES ÉVÉNEMENTS DES TRAJECTOIRES
+
     const trajectoryElement = document.getElementById("trajectoryChart");
 
     if (trajectoryElement) {
@@ -144,4 +158,92 @@
             config
         );
     }
+
+    // 4. COMPARAISON DÉTERMINISTE / QWEN
+
+    const comparisonLabels = data.comparison_labels || [];
+
+    const comparisonCharts = [
+        {
+            id: "comparisonAccuracyChart",
+            deterministic: data.deterministic_accuracies || [],
+            qwen: data.qwen_accuracies || [],
+            title: "Taux de réussite",
+            suffix: "%",
+            hoverSuffix: "%"
+        },
+        {
+            id: "comparisonDurationChart",
+            deterministic: data.deterministic_durations || [],
+            qwen: data.qwen_durations || [],
+            title: "Durée d'exécution",
+            suffix: " s",
+            hoverSuffix: " s"
+        },
+        {
+            id: "comparisonTokensChart",
+            deterministic: data.deterministic_tokens || [],
+            qwen: data.qwen_tokens || [],
+            title: "Nombre de tokens",
+            suffix: "",
+            hoverSuffix: ""
+        }
+    ];
+
+    comparisonCharts.forEach(chart => {
+        const element = document.getElementById(chart.id);
+
+        if (!element) {
+            return;
+        }
+
+        Plotly.newPlot(
+            element,
+            [
+                {
+                    x: comparisonLabels,
+                    y: chart.deterministic,
+                    name: "Déterministe",
+                    type: "bar",
+                    marker: { color: "#287b58" },
+                    hovertemplate:
+                        "%{x}<br>Déterministe : %{y}" +
+                        chart.hoverSuffix +
+                        "<extra></extra>"
+                },
+                {
+                    x: comparisonLabels,
+                    y: chart.qwen,
+                    name: "Qwen 2.5:3b",
+                    type: "bar",
+                    marker: { color: "#a52d32" },
+                    hovertemplate:
+                        "%{x}<br>Qwen 2.5:3b : %{y}" +
+                        chart.hoverSuffix +
+                        "<extra></extra>"
+                }
+            ],
+            {
+                ...layoutBase,
+                barmode: "group",
+                showlegend: true,
+                legend: {
+                    orientation: "h",
+                    y: 1.12,
+                    x: 0
+                },
+                yaxis: {
+                    title: chart.title,
+                    ticksuffix: chart.suffix,
+                    gridcolor: "#eeece7",
+                    zeroline: false,
+                    rangemode: "tozero"
+                },
+                xaxis: {
+                    showgrid: false
+                }
+            },
+            config
+        );
+    });
 });

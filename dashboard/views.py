@@ -13,7 +13,7 @@ CATEGORY_LABELS = {
 
 
 def home(request):
-    history = EvaluationRun.objects.all().order_by("-log_path")
+    history = EvaluationRun.objects.all().order_by("-created_at")
 
     # Récupérer la dernière évaluation de chaque catégorie
     # pour chaque type d'agent (Déterministe et Qwen).
