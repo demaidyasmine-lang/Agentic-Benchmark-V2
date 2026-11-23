@@ -1,0 +1,13 @@
+x-inspect_docker_sandbox:
+  unsafe_allow_writable_host_mounts: true
+
+services:
+  default:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    command: ["sh", "-c", "sleep infinity"]
+    working_dir: /workspace
+    volumes:
+      - .:/workspace

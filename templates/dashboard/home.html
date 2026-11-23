@@ -1,0 +1,616 @@
+﻿
+{% load static %}
+{% load tz %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f5f4f0">
+    <meta name="description" content="Plateforme d'évaluation et d'analyse des agents IA">
+    <title>{{ project_name }} | Tableau de bord</title>
+
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <script src="https://cdn.plot.ly/plotly-3.0.1.min.js"></script>
+</head>
+
+<body>
+<div class="app-shell">
+
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-mark">A</div>
+            <div>
+                <strong>AGENTIC LAB</strong>
+                <span>Plateforme d'évaluation</span>
+            </div>
+        </div>
+
+        <div class="nav-label">ESPACE DE TRAVAIL</div>
+        <nav class="navigation">
+            <a href="#overview" class="nav-item active">
+                <span class="nav-icon">◫</span> Vue d'ensemble
+            </a>
+            <a href="#comparison" class="nav-item">
+                <span class="nav-icon">⇄</span> Comparaison des agents
+            </a>
+            <a href="#benchmarks" class="nav-item">
+                <span class="nav-icon">▤</span> Évaluations
+            </a>
+            <a href="#execution" class="nav-item">
+                <span class="nav-icon">⌁</span> Exécution
+            </a>
+            <a href="#trajectories" class="nav-item">
+                <span class="nav-icon">⌘</span> Trajectoires
+            </a>
+            <a href="#results" class="nav-item">
+                <span class="nav-icon">▣</span> Résultats des tâches
+            </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="status-dot"></div>
+            <div>
+                <strong>Système d'évaluation</strong>
+                <span>Base de données connectée</span>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header class="topbar">
+            <div>
+                <div class="breadcrumb">ESPACE DE TRAVAIL / VUE D'ENSEMBLE</div>
+                <h1>Tableau de bord</h1>
+                <p>Suivi et analyse des performances des agents intelligents.</p>
+            </div>
+
+            <div class="topbar-right">
+                <span class="live-indicator"></span>
+                <span>Environnement local</span>
+                <div class="avatar">IA</div>
+            </div>
+        </header>
+
+        <!-- VUE D'ENSEMBLE -->
+        <section id="overview" class="content-section">
+
+            <div class="welcome-row">
+                <div>
+                    <div class="eyebrow">PLATEFORME DE RECHERCHE</div>
+                    <h2>Laboratoire d'évaluation des agents IA</h2>
+                    <p>{{ project_description }}</p>
+                </div>
+                <div class="date-label">BENCHMARK V2 · 2026</div>
+            </div>
+
+            <div class="kpi-grid">
+
+                <article class="kpi-card">
+                    <div class="kpi-top">
+                        <span>Évaluations réalisées</span>
+                        <span class="kpi-icon">▤</span>
+                    </div>
+                    <div class="kpi-value">{{ total_evaluations }}</div>
+                    <div class="kpi-foot">Campagnes d'évaluation enregistrées</div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-top">
+                        <span>Tâches évaluées</span>
+                        <span class="kpi-icon">⌘</span>
+                    </div>
+                    <div class="kpi-value">{{ total_tasks }}</div>
+                    <div class="kpi-foot">Sur les dernières évaluations retenues</div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-top">
+                        <span>Tâches réussies</span>
+                        <span class="kpi-icon success-icon">✓</span>
+                    </div>
+                    <div class="kpi-value">{{ passed_tasks }}</div>
+                    <div class="kpi-foot">Vérifiées par les scoreurs</div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-top">
+                        <span>Taux de réussite global</span>
+                        <span class="kpi-icon">◎</span>
+                    </div>
+                    <div class="kpi-value">{{ global_accuracy|floatformat:2 }}<small>%</small></div>
+                    <div class="kpi-foot">Tâches réussies / tâches évaluées</div>
+                </article>
+
+            </div>
+
+            <div class="section-heading">
+                <div>
+                    <div class="eyebrow">ANALYSE DES PERFORMANCES</div>
+                    <h3>Vue globale des benchmarks</h3>
+                </div>
+                <span class="section-note">Données issues des journaux Inspect AI</span>
+            </div>
+
+            <div class="charts-grid">
+
+                <article class="panel chart-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <h4>Taux de réussite par agent</h4>
+                            <p>Pourcentage de tâches réussies</p>
+                        </div>
+                        <span class="panel-tag">RÉUSSITE</span>
+                    </div>
+                    <div id="accuracyChart" class="chart-area"></div>
+                </article>
+
+                <article class="panel chart-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <h4>Répartition des résultats</h4>
+                            <p>Tâches réussies et échouées</p>
+                        </div>
+                        <span class="panel-tag">TÂCHES</span>
+                    </div>
+                    <div id="taskChart" class="chart-area"></div>
+                </article>
+
+            </div>
+        </section>
+
+        <!-- COMPARAISON DES AGENTS -->
+        <section id="comparison" class="content-section">
+
+            <div class="section-heading">
+                <div>
+                    <div class="eyebrow">ANALYSE COMPARATIVE</div>
+                    <h3>Agent déterministe vs Agent LLM</h3>
+                </div>
+                <span class="section-note">Comparaison des 3 benchmarks</span>
+            </div>
+
+            <div class="comparison-intro panel">
+                <div class="comparison-indicator"></div>
+                <div>
+                    <strong>Deux approches d'exécution évaluées</strong>
+                    <p>
+                        L'agent déterministe exécute des règles prédéfinies.
+                        L'agent Qwen 2.5:3b utilise un modèle de langage
+                        pour analyser les instructions et produire ses actions.
+                    </p>
+                </div>
+            </div>
+
+            <div class="charts-grid comparison-charts">
+
+                <article class="panel chart-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <h4>Comparaison de la précision</h4>
+                            <p>Taux de réussite par catégorie</p>
+                        </div>
+                        <span class="panel-tag">ACCURACY</span>
+                    </div>
+                    <div id="comparisonAccuracyChart" class="chart-area"></div>
+                </article>
+
+                <article class="panel chart-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <h4>Comparaison des durées</h4>
+                            <p>Temps total d'exécution en secondes</p>
+                        </div>
+                        <span class="panel-tag">TEMPS</span>
+                    </div>
+                    <div id="comparisonDurationChart" class="chart-area"></div>
+                </article>
+
+                <article class="panel chart-panel comparison-full">
+                    <div class="panel-heading">
+                        <div>
+                            <h4>Consommation de tokens</h4>
+                            <p>Nombre total de tokens utilisés par évaluation</p>
+                        </div>
+                        <span class="panel-tag">TOKENS</span>
+                    </div>
+                    <div id="comparisonTokensChart" class="chart-area"></div>
+                </article>
+
+            </div>
+
+            <div class="section-heading">
+                <div>
+                    <div class="eyebrow">SYNTHÈSE DES RÉSULTATS</div>
+                    <h3>Tableau comparatif des agents</h3>
+                </div>
+                <span class="section-note">Dernière évaluation de chaque agent</span>
+            </div>
+
+            <article class="panel table-panel comparison-table-panel">
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>BENCHMARK</th>
+                                <th>AGENT</th>
+                                <th>RÉUSSITE</th>
+                                <th>DURÉE</th>
+                                <th>TOKENS</th>
+                                <th>TÂCHES RÉUSSIES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for item in comparison_data %}
+                            <tr class="comparison-category-row">
+                                <td colspan="6">{{ item.label }}</td>
+                            </tr>
+
+                            <tr>
+                                <td>{{ item.label }}</td>
+                                <td>Déterministe</td>
+                                <td>
+                                    {% if item.deterministic_accuracy != None %}
+                                        <strong>{{ item.deterministic_accuracy|floatformat:2 }} %</strong>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.deterministic_duration != None %}
+                                        {{ item.deterministic_duration|floatformat:2 }} s
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.deterministic_tokens != None %}
+                                        {{ item.deterministic_tokens }}
+                                    {% else %}
+                                        N/D
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.deterministic_passed != None %}
+                                        {{ item.deterministic_passed }}/{{ item.deterministic_tasks }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>{{ item.label }}</td>
+                                <td>Qwen 2.5:3b</td>
+                                <td>
+                                    {% if item.qwen_accuracy != None %}
+                                        <strong>{{ item.qwen_accuracy|floatformat:2 }} %</strong>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.qwen_duration != None %}
+                                        {{ item.qwen_duration|floatformat:2 }} s
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.qwen_tokens != None %}
+                                        {{ item.qwen_tokens }}
+                                    {% else %}
+                                        N/D
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.qwen_passed != None %}
+                                        {{ item.qwen_passed }}/{{ item.qwen_tasks }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="empty-state">
+                                    Aucune donnée comparative disponible.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <p class="comparison-footnote">
+                N/D : consommation de tokens non disponible pour l'agent déterministe.
+                Les durées correspondent aux durées globales des évaluations Inspect AI.
+            </p>
+
+        </section>
+
+        <!-- EXECUTION -->
+        <section id="execution" class="content-section">
+
+            <div class="section-heading">
+                <div>
+                    <div class="eyebrow">MESURE DE L'EXÉCUTION</div>
+                    <h3>Statistiques d'exécution</h3>
+                </div>
+                <span class="section-note">Trajectoires Inspect AI enregistrées</span>
+            </div>
+
+            <div class="kpi-grid">
+
+                <article class="kpi-card">
+                    <div class="kpi-top">
+                        <span>Événements enregistrés</span>
+                        <span class="kpi-icon">⌁</span>
+                    </div>
+                    <div class="kpi-value">{{ total_events }}</div>
+                    <div class="kpi-foot">Événements des trajectoires</div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-top">
+                        <span>Appels Sandbox</span>
+                        <span class="kpi-icon">▣</span>
+                    </div>
+                    <div class="kpi-value">{{ total_sandbox_calls }}</div>
+                    <div class="kpi-foot">Commandes exécutées dans Docker</div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-top">
+                        <span>Étapes moyennes</span>
+                        <span class="kpi-icon">↗</span>
+                    </div>
+                    <div class="kpi-value">{{ average_steps|floatformat:2 }}</div>
+                    <div class="kpi-foot">Étapes du solveur par tâche</div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-top">
+                        <span>Durée totale</span>
+                        <span class="kpi-icon">◷</span>
+                    </div>
+                    <div class="kpi-value">{{ total_duration|floatformat:2 }}<small> s</small></div>
+                    <div class="kpi-foot">Temps cumulé des évaluations</div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-top">
+                        <span>Tokens consommés</span>
+                        <span class="kpi-icon">T</span>
+                    </div>
+                    <div class="kpi-value">{{ total_tokens }}</div>
+                    <div class="kpi-foot">Tokens des évaluations disponibles</div>
+                </article>
+
+            </div>
+
+            <div class="section-heading">
+                <div>
+                    <div class="eyebrow">EFFICACITÉ DES TRAJECTOIRES</div>
+                    <h3>Indicateurs d'efficacité</h3>
+                </div>
+                <span class="section-note">Calculés sur les dernières évaluations</span>
+            </div>
+
+            <div class="kpi-grid">
+                <article class="kpi-card">
+                    <div class="kpi-top"><span>Appels Sandbox de l'agent / tâche</span></div>
+                    <div class="kpi-value">{{ average_solver_calls|floatformat:2 }}</div>
+                    <div class="kpi-foot">Actions effectuées par le solver</div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-top"><span>Durée moyenne par tâche</span></div>
+                    <div class="kpi-value">{{ average_task_duration|floatformat:2 }}<small> s</small></div>
+                    <div class="kpi-foot">Temps moyen d'exécution</div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-top"><span>Événements moyens</span></div>
+                    <div class="kpi-value">{{ average_events|floatformat:2 }}</div>
+                    <div class="kpi-foot">Événements par trajectoire</div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-top"><span>Part des appels de l'agent</span></div>
+                    <div class="kpi-value">{{ solver_call_ratio|floatformat:2 }}<small>%</small></div>
+                    <div class="kpi-foot">Part des appels Sandbox totaux</div>
+                </article>
+            </div>
+
+        </section>
+
+        <!-- TRAJECTOIRES -->
+        <section id="trajectories" class="content-section">
+
+            <div class="section-heading">
+                <div>
+                    <div class="eyebrow">ANALYSE DES TRAJECTOIRES</div>
+                    <h3>Structure des événements</h3>
+                </div>
+                <span class="section-note">Répartition des événements Inspect AI</span>
+            </div>
+
+            <div class="charts-grid">
+
+                <article class="panel chart-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <h4>Répartition des événements</h4>
+                            <p>Composition des trajectoires enregistrées</p>
+                        </div>
+                        <span class="panel-tag">TRAJECTOIRES</span>
+                    </div>
+                    <div id="trajectoryChart" class="chart-area"></div>
+                </article>
+
+                <article class="panel chart-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <h4>Détail des événements</h4>
+                            <p>Nombre d'occurrences par type</p>
+                        </div>
+                        <span class="panel-tag">ÉVÉNEMENTS</span>
+                    </div>
+
+                    <div class="table-scroll">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>TYPE D'ÉVÉNEMENT</th>
+                                    <th>NOMBRE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Début d'étape</td><td>{{ trajectory_totals.span_begin }}</td></tr>
+                                <tr><td>Fin d'étape</td><td>{{ trajectory_totals.span_end }}</td></tr>
+                                <tr><td>Appels Sandbox</td><td>{{ trajectory_totals.sandbox }}</td></tr>
+                                <tr><td>Évaluations des scores</td><td>{{ trajectory_totals.score }}</td></tr>
+                                <tr><td>Changements d'état</td><td>{{ trajectory_totals.state_change }}</td></tr>
+                                <tr><td>Initialisations</td><td>{{ trajectory_totals.sample_init }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+
+            </div>
+        </section>
+
+        <!-- HISTORIQUE -->
+        <section id="benchmarks" class="content-section">
+
+            <div class="section-heading">
+                <div>
+                    <div class="eyebrow">HISTORIQUE DES ÉVALUATIONS</div>
+                    <h3>Campagnes de benchmark</h3>
+                </div>
+                <span class="section-note">{{ total_evaluations }} campagnes enregistrées</span>
+            </div>
+
+            <article class="panel table-panel">
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>BENCHMARK</th>
+                                <th>AGENT</th>
+                                <th>TÂCHES</th>
+                                <th>RÉUSSIES</th>
+                                <th>ÉCHOUÉES</th>
+                                <th>TAUX DE RÉUSSITE</th>
+                                <th>STATUT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for evaluation in evaluations %}
+                            <tr>
+                                <td>
+                                    <strong>{{ evaluation.benchmark_name }}</strong>
+                                    <span class="table-subtitle">{{ evaluation.get_category_display }}</span>
+                                </td>
+                                <td>{{ evaluation.agent_name }}</td>
+                                <td>{{ evaluation.total_tasks }}</td>
+                                <td class="success-text">{{ evaluation.passed_tasks }}</td>
+                                <td class="failure-text">{{ evaluation.failed_tasks }}</td>
+                                <td>
+                                    <strong>{% widthratio evaluation.accuracy 1 100 %} %</strong>
+                                </td>
+                                <td>
+                                    <span class="status-badge">
+                                        <span></span>{{ evaluation.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="empty-state">
+                                    Aucune campagne d'évaluation disponible.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+        </section>
+
+        <!-- RÉSULTATS -->
+        <section id="results" class="content-section">
+
+            <div class="section-heading">
+                <div>
+                    <div class="eyebrow">VÉRIFICATION DÉTAILLÉE</div>
+                    <h3>Résultats individuels des tâches</h3>
+                </div>
+                <span class="section-note">{{ total_tasks }} tâches enregistrées</span>
+            </div>
+
+            <article class="panel table-panel">
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>IDENTIFIANT</th>
+                                <th>CATÉGORIE</th>
+                                <th>AGENT</th>
+                                <th>SCORE</th>
+                                <th>ÉVÉNEMENTS</th>
+                                <th>APPELS SANDBOX</th>
+                                <th>ÉTAPES</th>
+                                <th>RÉSULTAT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for result in task_results %}
+                            <tr>
+                                <td><strong>{{ result.sample_id }}</strong></td>
+                                <td>{{ result.get_category_display|default:result.category }}</td>
+                                <td>{{ result.evaluation.agent_name }}</td>
+                                <td>{{ result.score|floatformat:2 }}</td>
+                                <td>{{ result.event_count }}</td>
+                                <td>{{ result.sandbox_calls }}</td>
+                                <td>{{ result.steps }}</td>
+                                <td>
+                                    {% if result.passed %}
+                                        <span class="status-badge">
+                                            <span></span>Réussie
+                                        </span>
+                                    {% else %}
+                                        <span class="status-badge failed-badge">
+                                            <span></span>Échouée
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="8" class="empty-state">
+                                    Aucun résultat de tâche disponible.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+        </section>
+
+        <footer class="footer">
+            <span>LABORATOIRE D'ÉVALUATION DES AGENTS IA</span>
+            <span>Inspect AI · Docker · Django · Plotly</span>
+        </footer>
+
+    </main>
+</div>
+
+{{ chart_data|json_script:"benchmark-chart-data" }}
+<script src="{% static 'js/dashboard.js' %}"></script>
+</body>
+</html>

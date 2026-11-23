@@ -1,0 +1,27 @@
+# Environnement Python
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+
+# Base de données locale
+db.sqlite3
+db.sqlite3-journal
+
+# Logs d'évaluation
+logs/
+
+# Secrets et variables d'environnement
+.env
+.env.*
+!.env.example
+
+# Fichiers système et éditeurs
+.DS_Store
+.vscode/
+.idea/
+
+# Couverture de tests
+.coverage
+htmlcov/
+.pytest_cache/
