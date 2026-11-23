@@ -1,4 +1,4 @@
-﻿from inspect_ai import Task, task
+from inspect_ai import Task, task
 
 from benchmark.datasets.repository_dataset import repository_samples
 from benchmark.solvers.repository_solver import deterministic_repository_solver

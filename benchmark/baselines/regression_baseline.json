@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "baselines": [
+    {
+      "agent_name": "Deterministic SQL Agent",
+      "category": "SQL",
+      "passed_samples": [
+        "SQL-001", "SQL-002", "SQL-003", "SQL-004", "SQL-005",
+        "SQL-006", "SQL-007", "SQL-008", "SQL-009", "SQL-010"
+      ]
+    },
+    {
+      "agent_name": "Deterministic API Agent",
+      "category": "API",
+      "passed_samples": [
+        "API-001", "API-002", "API-003", "API-004",
+        "API-005", "API-006", "API-007", "API-008"
+      ]
+    },
+    {
+      "agent_name": "Deterministic Repository Agent",
+      "category": "REPOSITORY",
+      "passed_samples": [
+        "REPO-001", "REPO-002", "REPO-003", "REPO-004",
+        "REPO-005", "REPO-006", "REPO-007"
+      ]
+    },
+    {
+      "agent_name": "Qwen SQL Agent",
+      "category": "SQL",
+      "passed_samples": [
+        "SQL-001", "SQL-002", "SQL-003", "SQL-004", "SQL-005",
+        "SQL-006", "SQL-007", "SQL-008", "SQL-009", "SQL-010"
+      ]
+    },
+    {
+      "agent_name": "Qwen API Agent",
+      "category": "API",
+      "passed_samples": [
+        "API-001", "API-002", "API-003", "API-004",
+        "API-005", "API-006", "API-007", "API-008"
+      ]
+    },
+    {
+      "agent_name": "Qwen Repository Agent",
+      "category": "REPOSITORY",
+      "passed_samples": [
+        "REPO-001", "REPO-002", "REPO-003", "REPO-004",
+        "REPO-005", "REPO-006", "REPO-007"
+      ]
+    }
+  ]
+}

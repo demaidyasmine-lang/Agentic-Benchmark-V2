@@ -1,4 +1,7 @@
-﻿from io import StringIO
+﻿
+import json
+import tempfile
+from pathlib import Path
 
 from django.core.management import call_command, CommandError
 from django.db import IntegrityError, transaction
@@ -24,7 +27,6 @@ class DashboardModelTests(TestCase):
 
     def test_evaluation_creation(self):
         evaluation = self.create_evaluation("logs/test-001.eval")
-
         self.assertEqual(evaluation.category, "SQL")
         self.assertEqual(evaluation.accuracy, 1.0)
         self.assertEqual(evaluation.total_tasks, 1)
@@ -67,11 +69,32 @@ class DashboardModelTests(TestCase):
 
 class RegressionCommandTests(TestCase):
 
-    def create_evaluation(self, log_path):
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.baseline_path = Path(self.temp_dir.name) / "baseline.json"
+
+        baseline = {
+            "version": 1,
+            "baselines": [
+                {
+                    "agent_name": "Test Agent",
+                    "category": "SQL",
+                    "passed_samples": ["SQL-001"],
+                }
+            ],
+        }
+
+        with self.baseline_path.open("w", encoding="utf-8") as file:
+            json.dump(baseline, file)
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def create_evaluation(self, log_path, agent_name="Test Agent"):
         return EvaluationRun.objects.create(
             benchmark_name="SQL Benchmark",
             category="SQL",
-            agent_name="Test Agent",
+            agent_name=agent_name,
             status="SUCCESS",
             log_path=log_path,
             total_tasks=1,
@@ -89,45 +112,54 @@ class RegressionCommandTests(TestCase):
             passed=passed,
         )
 
-    def create_comparison(self):
-        baseline = self.create_evaluation("logs/2026-01-01_old.eval")
-        current = self.create_evaluation("logs/2026-01-02_new.eval")
-        return baseline, current
+    def run_regression_check(self):
+        call_command(
+            "check_regressions",
+            baseline=str(self.baseline_path),
+        )
 
     def test_no_regression(self):
-        baseline, current = self.create_comparison()
+        evaluation = self.create_evaluation("logs/current.eval")
+        self.add_task(evaluation, "SQL-001", True)
 
-        self.add_task(baseline, "SQL-001", True)
-        self.add_task(current, "SQL-001", True)
-
-        output = StringIO()
-        call_command("check_regressions", stdout=output)
-
-        self.assertIn("CONTROLE REUSSI", output.getvalue())
+        self.run_regression_check()
 
     def test_detects_failed_task(self):
-        baseline, current = self.create_comparison()
-
-        self.add_task(baseline, "SQL-001", True)
-        self.add_task(current, "SQL-001", False)
+        evaluation = self.create_evaluation("logs/current.eval")
+        self.add_task(evaluation, "SQL-001", False)
 
         with self.assertRaises(CommandError):
-            call_command("check_regressions", stdout=StringIO())
+            self.run_regression_check()
 
     def test_detects_missing_task(self):
-        baseline, current = self.create_comparison()
-
-        self.add_task(baseline, "SQL-001", True)
+        self.create_evaluation("logs/current.eval")
 
         with self.assertRaises(CommandError):
-            call_command("check_regressions", stdout=StringIO())
+            self.run_regression_check()
 
     def test_detects_added_task(self):
-        baseline, current = self.create_comparison()
-
-        self.add_task(baseline, "SQL-001", True)
-        self.add_task(current, "SQL-001", True)
-        self.add_task(current, "SQL-002", True)
+        evaluation = self.create_evaluation("logs/current.eval")
+        self.add_task(evaluation, "SQL-001", True)
+        self.add_task(evaluation, "SQL-002", True)
 
         with self.assertRaises(CommandError):
-            call_command("check_regressions", stdout=StringIO())
+            self.run_regression_check()
+
+    def test_does_not_compare_different_agents(self):
+        evaluation = self.create_evaluation(
+            "logs/expected-agent.eval",
+            agent_name="Test Agent",
+        )
+        self.add_task(evaluation, "SQL-001", True)
+
+        other = self.create_evaluation(
+            "logs/other-agent.eval",
+            agent_name="Other Agent",
+        )
+        self.add_task(other, "SQL-001", False)
+
+        self.run_regression_check()
+
+    def test_detects_missing_agent_evaluation(self):
+        with self.assertRaises(CommandError):
+            self.run_regression_check()

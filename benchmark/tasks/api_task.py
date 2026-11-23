@@ -1,4 +1,4 @@
-﻿from inspect_ai import Task, task
+from inspect_ai import Task, task
 
 from benchmark.datasets.api_dataset import api_samples
 from benchmark.solvers.api_solver import deterministic_api_solver
